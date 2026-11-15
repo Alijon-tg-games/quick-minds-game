@@ -1,0 +1,225 @@
+<!doctype html><html lang="uz"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no"><title>Durak & Bura</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+body{margin:0;font-family:system-ui,sans-serif;background:#0f5132;color:#fff;min-height:100vh;display:flex;justify-content:center}
+#app{width:100%;max-width:440px;padding:14px;box-sizing:border-box;text-align:center}
+h1{font-size:24px;margin:10px 0 18px}
+h2{font-size:20px;margin:8px 0}
+button{display:block;width:100%;margin:8px 0;padding:14px;border:0;border-radius:12px;background:#ffd54f;color:#222;font-size:16px;font-weight:700;cursor:pointer}
+button.alt{background:rgba(0,0,0,.3);color:#fff}
+button:disabled{opacity:.4}
+input,select{width:100%;padding:12px;border-radius:10px;border:0;font-size:16px;box-sizing:border-box;margin:6px 0}
+.row{display:flex;gap:8px}
+.row>*{flex:1}
+.card{background:rgba(0,0,0,.25);border-radius:12px;padding:10px;margin:8px 0;text-align:left}
+.hidden{display:none}
+.notif{display:flex;align-items:center;gap:10px;background:rgba(0,0,0,.3);border-radius:12px;padding:10px;margin:8px 0;text-align:left}
+.notif .txt{flex:1;font-size:14px}
+.notif .txt b{font-size:15px}
+.notif .btns{display:flex;flex-direction:column;gap:6px}
+.notif button{margin:0;padding:8px 12px;font-size:14px;width:auto}
+.acc{background:#43a047!important;color:#fff!important}
+.dec{background:#e53935!important;color:#fff!important}
+.muted{opacity:.8;font-size:14px}
+.code{font-size:30px;font-weight:800;letter-spacing:4px;margin:8px 0}
+.toast{min-height:20px;font-size:14px;margin:6px 0;color:#ffe082}
+label.opt{display:flex;align-items:center;gap:8px;justify-content:center;background:rgba(0,0,0,.25);border-radius:10px;padding:10px;margin:6px 0;font-size:16px}
+</style></head><body><div id="app">
+
+<div id="s-home" class="scr">
+  <h1>🃏 Durak & Bura</h1>
+  <button onclick="show('friends');loadFriends()">👥 Friends</button>
+  <button onclick="show('invites');loadInvites()">📨 Invites</button>
+  <button onclick="show('create')">➕ Create lobby</button>
+  <div id="notifs"></div>
+  <div class="toast" id="toastHome"></div>
+</div>
+
+<div id="s-friends" class="scr hidden">
+  <h2>👥 Friends</h2>
+  <div class="row"><input id="fName" placeholder="Username (e.g. ali_t)"><button class="alt" style="flex:0 0 auto;width:auto;margin:6px 0" onclick="addFriend()">Add</button></div>
+  <div class="toast" id="toastFriends"></div>
+  <div id="friendList"></div>
+  <button class="alt" onclick="show('home')">⬅ Menu</button>
+</div>
+
+<div id="s-invites" class="scr hidden">
+  <h2>📨 Invites</h2>
+  <div id="inviteList"></div>
+  <button class="alt" onclick="show('home')">⬅ Menu</button>
+</div>
+
+<div id="s-create" class="scr hidden">
+  <h2>➕ Create lobby</h2>
+  <div class="muted">Game</div>
+  <label class="opt"><input type="radio" name="game" value="durak" checked> Durak</label>
+  <label class="opt"><input type="radio" name="game" value="bura"> Bura</label>
+  <div class="muted">Deck size</div>
+  <label class="opt"><input type="radio" name="cards" value="24"> 24 cards</label>
+  <label class="opt"><input type="radio" name="cards" value="36" checked> 36 cards</label>
+  <div class="muted">Players</div>
+  <select id="players"><option value="2">2 players</option><option value="3" selected>3 players</option><option value="4">4 players</option><option value="5">5 players</option><option value="6">6 players</option></select>
+  <div class="toast" id="toastCreate"></div>
+  <button onclick="createRoom()">Create lobby</button>
+  <button class="alt" onclick="show('home')">⬅ Menu</button>
+</div>
+
+<div id="s-room" class="scr hidden">
+  <h2 id="roomTitle">Lobby</h2>
+  <div class="muted">Lobby code</div>
+  <div class="code" id="roomCode"></div>
+  <div class="muted" id="roomInfo"></div>
+  <div class="card" id="memberList"></div>
+  <button id="btnReady" onclick="toggleReady()">✅ I'm ready</button>
+  <div id="hostBox" class="hidden">
+    <div class="row"><input id="invName" placeholder="Friend's username"><button class="alt" style="flex:0 0 auto;width:auto;margin:6px 0" onclick="invite()">Invite</button></div>
+    <button id="btnStart" onclick="startGame()" disabled>▶ Start game</button>
+  </div>
+  <div class="toast" id="toastRoom"></div>
+  <button class="alt" id="btnLeave" onclick="leaveRoom()">⬅ Leave</button>
+</div>
+
+</div>
+<script>
+const API = "https://quick-minds.alijonaye804.workers.dev";
+const tg = window.Telegram && window.Telegram.WebApp;
+if (tg) { tg.ready(); tg.expand(); }
+const initData = tg ? tg.initData : "";
+let roomId = null, roomTimer = null, lastRoom = null;
+function show(name) {
+  ["home","friends","invites","create","room"].forEach(s => document.getElementById("s-"+s).classList.toggle("hidden", s !== name));
+  if (name !== "room" && roomTimer) { clearInterval(roomTimer); roomTimer = null; }
+}
+function say(id, text) { document.getElementById(id).textContent = text || ""; }
+const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+async function api(path, body) {
+  if (!initData) return { ok: false, error: "Open this page from Telegram (via the bot), not from a browser." };
+  let r;
+  if (body) {
+    r = await fetch(API + path, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...body, initData }) });
+  } else {
+    r = await fetch(API + path + (path.includes("?") ? "&" : "?") + "initData=" + encodeURIComponent(initData));
+  }
+  const data = await r.json().catch(() => null);
+  return data || { ok: false, error: "Server error (" + r.status + "). Try again." };
+}
+async function safe(fn) { try { return await fn(); } catch (e) { return { ok: false, error: "No connection to the server. Check your internet and try again." }; } }
+
+// ---- Friends ----
+async function loadFriends() {
+  const r = await safe(() => api("/api/friends"));
+  const list = document.getElementById("friendList");
+  if (!r.ok) return say("toastFriends", r.error);
+  list.innerHTML = r.friends.length ? "" : "<div class='muted'>No friends yet. Add one by username.</div>";
+  r.friends.forEach(f => { const d = document.createElement("div"); d.className = "card"; d.innerHTML = "<b>" + esc(f.name) + "</b> <span class='muted'>@" + esc(f.username) + "</span>"; list.appendChild(d); });
+}
+async function addFriend() {
+  const u = document.getElementById("fName").value.trim();
+  if (!u) return say("toastFriends", "Enter a username");
+  const r = await safe(() => api("/api/follow", { username: u }));
+  say("toastFriends", r.ok ? "Friend added ✅" : r.error);
+  if (r.ok) { document.getElementById("fName").value = ""; loadFriends(); }
+}
+
+// ---- Invites ----
+function renderInvites(list, box) {
+  box.innerHTML = "";
+  list.forEach(i => {
+    const d = document.createElement("div"); d.className = "notif";
+    d.innerHTML = "<div class='txt'><b>@" + esc(i.host_username || i.host_name) + "</b> invited you to " + (i.game === "bura" ? "Bura" : "Durak") + "<br><span class='muted'>" + i.cards + " cards, " + i.players + " players</span></div>";
+    const btns = document.createElement("div"); btns.className = "btns";
+    const acc = document.createElement("button"); acc.className = "acc"; acc.textContent = "Accept"; acc.onclick = () => joinRoom(i.id);
+    const dec = document.createElement("button"); dec.className = "dec"; dec.textContent = "Refuse"; dec.onclick = () => declineInvite(i.id);
+    btns.appendChild(acc); btns.appendChild(dec); d.appendChild(btns); box.appendChild(d);
+  });
+}
+async function loadInvites() {
+  const r = await safe(() => api("/api/invites"));
+  const list = document.getElementById("inviteList");
+  if (!r.ok) { list.textContent = r.error; return; }
+  if (!r.invites.length) { list.innerHTML = "<div class='muted'>No invites right now.</div>"; return; }
+  renderInvites(r.invites, list);
+}
+async function pollHomeInvites() {
+  if (document.getElementById("s-home").classList.contains("hidden")) return;
+  const r = await safe(() => api("/api/invites"));
+  if (!r.ok) return;
+  const box = document.getElementById("notifs");
+  if (!r.invites.length) { box.innerHTML = ""; return; }
+  renderInvites(r.invites, box);
+}
+async function declineInvite(id) {
+  const r = await safe(() => api("/api/decline", { id }));
+  if (!r.ok) alert(r.error);
+  loadInvites();
+  pollHomeInvites();
+}
+async function joinRoom(id) {
+  const r = await safe(() => api("/api/join", { id }));
+  if (!r.ok) return alert(r.error);
+  openRoom(id);
+}
+
+// ---- Create lobby ----
+async function createRoom() {
+  const game = document.querySelector("input[name=game]:checked").value;
+  const cards = Number(document.querySelector("input[name=cards]:checked").value);
+  const players = Number(document.getElementById("players").value);
+  const r = await safe(() => api("/api/room", { game, cards, players }));
+  if (!r.ok) return say("toastCreate", r.error);
+  openRoom(r.id);
+}
+
+// ---- Lobby ----
+function openRoom(id) {
+  roomId = id; show("room"); say("toastRoom", "");
+  loadRoom();
+  if (roomTimer) clearInterval(roomTimer);
+  roomTimer = setInterval(loadRoom, 2000);
+}
+async function loadRoom() {
+  if (!roomId) return;
+  const r = await safe(() => api("/api/room?id=" + roomId));
+  if (!r.ok) return say("toastRoom", r.error);
+  lastRoom = r;
+  const g = r.room;
+  document.getElementById("roomTitle").textContent = g.game === "bura" ? "Bura" : "Durak";
+  document.getElementById("roomCode").textContent = g.id;
+  document.getElementById("roomInfo").textContent = g.cards + " cards, " + g.perHand + " each, " + g.players + " players";
+  const mine = r.members.find(m => m.id === r.room.host) ;
+  const box = document.getElementById("memberList");
+  box.innerHTML = "<b>Members (" + r.members.length + "/" + g.players + ")</b><br>" + r.members.map(m =>
+    (m.ready ? "✅ " : "⏳ ") + esc(m.name) + (m.id === g.host ? " 👑" : "")).join("<br>");
+  const me = r.members.find(m => m.id === myId());
+  document.getElementById("btnReady").textContent = me && me.ready ? "⏳ Not ready" : "✅ I'm ready";
+  document.getElementById("btnReady").dataset.ready = me && me.ready ? "0" : "1";
+  document.getElementById("hostBox").classList.toggle("hidden", !r.isHost);
+  document.getElementById("btnLeave").classList.toggle("hidden", !!r.isHost);
+  const allReady = r.members.length >= 2 && r.members.every(m => m.ready);
+  document.getElementById("btnStart").disabled = !allReady || g.status !== "lobby";
+  if (g.status === "playing") say("toastRoom", "Game started! (The game screen comes in the next step.)");
+}
+function myId() { try { return tg && tg.initDataUnsafe && tg.initDataUnsafe.user ? tg.initDataUnsafe.user.id : null; } catch (e) { return null; } }
+async function toggleReady() {
+  const ready = document.getElementById("btnReady").dataset.ready === "1";
+  const r = await safe(() => api("/api/ready", { id: roomId, ready }));
+  if (!r.ok) say("toastRoom", r.error); else loadRoom();
+}
+async function invite() {
+  const u = document.getElementById("invName").value.trim();
+  if (!u) return say("toastRoom", "Enter a username");
+  const r = await safe(() => api("/api/invite", { id: roomId, username: u }));
+  say("toastRoom", r.ok ? r.name + " ga invited ✅" : r.error);
+  if (r.ok) document.getElementById("invName").value = "";
+}
+async function startGame() {
+  const r = await safe(() => api("/api/start", { id: roomId }));
+  if (!r.ok) say("toastRoom", r.error); else loadRoom();
+}
+async function leaveRoom() {
+  const r = await safe(() => api("/api/leave", { id: roomId }));
+  if (!r.ok) return say("toastRoom", r.error);
+  roomId = null; show("home");
+}
+if (initData) { pollHomeInvites(); setInterval(pollHomeInvites, 4000); }
+</script></body></html>

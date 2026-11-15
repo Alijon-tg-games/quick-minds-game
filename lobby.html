@@ -1,43 +1,157 @@
-<!doctype html><html lang="uz"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no"><title>Durak & Bura</title>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>Durak & Bura</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
-body{margin:0;font-family:system-ui,sans-serif;background:#0f5132;color:#fff;min-height:100vh;display:flex;justify-content:center}
-#app{width:100%;max-width:440px;padding:14px;box-sizing:border-box;text-align:center}
-h1{font-size:24px;margin:10px 0 18px}
-h2{font-size:20px;margin:8px 0}
-button{display:block;width:100%;margin:8px 0;padding:14px;border:0;border-radius:12px;background:#ffd54f;color:#222;font-size:16px;font-weight:700;cursor:pointer}
-button.alt{background:rgba(0,0,0,.3);color:#fff}
-button:disabled{opacity:.4}
-input,select{width:100%;padding:12px;border-radius:10px;border:0;font-size:16px;box-sizing:border-box;margin:6px 0}
-.row{display:flex;gap:8px}
-.row>*{flex:1}
-.card{background:rgba(0,0,0,.25);border-radius:12px;padding:10px;margin:8px 0;text-align:left}
-.hidden{display:none}
-.notif{display:flex;align-items:center;gap:10px;background:rgba(0,0,0,.3);border-radius:12px;padding:10px;margin:8px 0;text-align:left}
-.notif .txt{flex:1;font-size:14px}
-.notif .txt b{font-size:15px}
-.notif .btns{display:flex;flex-direction:column;gap:6px}
-.notif button{margin:0;padding:8px 12px;font-size:14px;width:auto}
-.acc{background:#43a047!important;color:#fff!important}
-.dec{background:#e53935!important;color:#fff!important}
-.muted{opacity:.8;font-size:14px}
-.code{font-size:30px;font-weight:800;letter-spacing:4px;margin:8px 0}
-.toast{min-height:20px;font-size:14px;margin:6px 0;color:#ffe082}
-label.opt{display:flex;align-items:center;gap:8px;justify-content:center;background:rgba(0,0,0,.25);border-radius:10px;padding:10px;margin:6px 0;font-size:16px}
-</style></head><body><div id="app">
+:root{
+  --bg:#0b1220;
+  --bg2:#111a2e;
+  --card:#162138;
+  --card2:#1d2b47;
+  --line:rgba(148,163,184,.18);
+  --txt:#e8edf5;
+  --mut:#8b9ab3;
+  --acc:#22d3ee;
+  --gold:#fbbf24;
+  --ok:#22c55e;
+  --bad:#ef4444;
+  --r:16px;
+}
+@media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]){
+    --bg:#eef3fb;--bg2:#ffffff;--card:#ffffff;--card2:#f1f5fb;--line:rgba(15,23,42,.1);--txt:#0f172a;--mut:#64748b;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0b1220;--bg2:#111a2e;--card:#162138;--card2:#1d2b47;--line:rgba(148,163,184,.18);--txt:#e8edf5;--mut:#8b9ab3;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,system-ui,sans-serif;
+  background:radial-gradient(1200px 600px at 50% -200px,#1e3a5f 0%,var(--bg) 60%) var(--bg);
+  color:var(--txt);min-height:100vh;display:flex;justify-content:center;
+  -webkit-font-smoothing:antialiased;
+}
+#app{width:100%;max-width:440px;padding:20px 16px 32px;text-align:center}
+.scr{animation:fade .18s ease}
+@keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
 
-<div id="s-home" class="scr">
-  <h1>🃏 Durak & Bura</h1>
-  <button onclick="show('friends');loadFriends()">👥 Friends</button>
-  <button onclick="show('invites');loadInvites()">📨 Invites</button>
-  <button onclick="show('create')">➕ Create lobby</button>
+h1{font-size:26px;font-weight:800;letter-spacing:.2px;margin:12px 0 4px}
+.sub{color:var(--mut);font-size:14px;margin:0 0 22px}
+h2{font-size:22px;font-weight:800;margin:6px 0 14px}
+
+button{
+  display:block;width:100%;margin:10px 0;padding:15px 16px;border:0;border-radius:14px;
+  background:linear-gradient(135deg,var(--gold),#f59e0b);color:#1b1404;
+  font-size:16px;font-weight:700;cursor:pointer;
+  box-shadow:0 6px 18px rgba(251,191,36,.18);
+  transition:transform .08s ease,opacity .15s ease;
+  font-family:inherit;
+}
+button:active{transform:scale(.98)}
+button:disabled{opacity:.35;box-shadow:none;cursor:default}
+button.alt{background:var(--card2);color:var(--txt);box-shadow:none;border:1px solid var(--line)}
+button.acc{background:var(--ok);color:#fff;box-shadow:none}
+button.dec{background:var(--bad);color:#fff;box-shadow:none}
+.menu button{font-size:16px}
+.menu button .ico{display:inline-block;width:26px;text-align:left;margin-right:6px}
+
+input,select{
+  width:100%;padding:14px 14px;border-radius:12px;border:1px solid var(--line);
+  background:var(--card);color:var(--txt);font-size:16px;font-family:inherit;margin:6px 0;outline:none;
+}
+input:focus,select:focus{border-color:var(--acc)}
+.row{display:flex;gap:8px;align-items:stretch}
+.row>input{flex:1}
+.row>button{flex:0 0 auto;width:auto;margin:6px 0;padding:0 18px;border-radius:12px}
+
+.card{
+  background:var(--card);border:1px solid var(--line);border-radius:var(--r);
+  padding:12px 14px;margin:10px 0;text-align:left;
+}
+.card b{font-size:15px}
+.hidden{display:none!important}
+
+.muted{color:var(--mut);font-size:13px;margin:12px 0 6px;text-align:left;letter-spacing:.3px;text-transform:uppercase}
+.toast{min-height:22px;font-size:14px;margin:8px 0;color:var(--gold)}
+.empty{color:var(--mut);font-size:14px;padding:22px 10px;border:1px dashed var(--line);border-radius:var(--r);margin:10px 0}
+
+/* Friends */
+.friend{display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:12px;margin:8px 0;text-align:left}
+.avatar{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--acc),#6366f1);display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;flex:0 0 auto;font-size:16px}
+.friend .meta{flex:1;min-width:0}
+.friend .nm{font-weight:700;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.friend .un{color:var(--mut);font-size:13px}
+
+/* Options (create) */
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:6px 0 4px}
+label.opt{
+  position:relative;display:flex;align-items:center;justify-content:center;
+  background:var(--card);border:1px solid var(--line);border-radius:14px;
+  padding:14px 10px;font-size:15px;font-weight:600;cursor:pointer;user-select:none;
+  transition:border-color .15s ease,background .15s ease;
+}
+label.opt input{position:absolute;opacity:0;pointer-events:none;margin:0}
+label.opt:has(input:checked){border-color:var(--acc);background:linear-gradient(135deg,rgba(34,211,238,.16),rgba(99,102,241,.16));color:var(--txt)}
+label.opt.wide{grid-column:span 2}
+select{appearance:none;-webkit-appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--mut) 50%),linear-gradient(135deg,var(--mut) 50%,transparent 50%);background-position:calc(100% - 20px) 52%,calc(100% - 14px) 52%;background-size:6px 6px,6px 6px;background-repeat:no-repeat;text-align:center}
+
+/* Notifications (invites) */
+.notif{
+  display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--line);
+  border-radius:var(--r);padding:12px;margin:10px 0;text-align:left;
+}
+.notif .txt{flex:1;font-size:14px;line-height:1.35}
+.notif .txt b{font-size:15px}
+.notif .btns{display:flex;flex-direction:column;gap:6px;flex:0 0 96px}
+.notif button{margin:0;padding:9px 10px;font-size:14px;border-radius:10px;box-shadow:none}
+
+/* Lobby code */
+.codebox{
+  margin:10px 0 6px;padding:16px;border-radius:var(--r);
+  background:linear-gradient(135deg,rgba(34,211,238,.14),rgba(99,102,241,.14));border:1px solid var(--line);
+}
+.code{font-size:32px;font-weight:900;letter-spacing:6px;color:var(--gold);font-variant-numeric:tabular-nums}
+.codebox .muted{margin:0 0 4px;text-align:center}
+.info{color:var(--mut);font-size:14px;margin:4px 0 6px;text-align:center}
+
+/* Members */
+.members{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:6px;margin:10px 0;text-align:left}
+.member{display:flex;align-items:center;gap:10px;padding:10px 8px;border-radius:12px}
+.member+.member{border-top:1px solid var(--line)}
+.member .nm{flex:1;font-weight:600;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.badge{font-size:12px;font-weight:700;padding:4px 9px;border-radius:999px}
+.badge.ready{background:rgba(34,197,94,.16);color:var(--ok)}
+.badge.wait{background:rgba(148,163,184,.16);color:var(--mut)}
+.crown{font-size:14px}
+.mhead{display:flex;justify-content:space-between;align-items:center;padding:6px 8px 4px;color:var(--mut);font-size:12px;text-transform:uppercase;letter-spacing:.4px;font-weight:700}
+
+#btnReady{background:linear-gradient(135deg,var(--ok),#16a34a);color:#fff;box-shadow:0 6px 18px rgba(34,197,94,.22)}
+#btnReady[data-ready="0"]{background:linear-gradient(135deg,var(--gold),#f59e0b);color:#1b1404;box-shadow:0 6px 18px rgba(251,191,36,.18)}
+#btnStart{background:linear-gradient(135deg,var(--acc),#6366f1);color:#fff;box-shadow:0 6px 18px rgba(99,102,241,.25)}
+.invbox{margin-top:6px;padding-top:4px;border-top:1px solid var(--line)}
+</style>
+</head>
+<body>
+<div id="app">
+
+<div id="s-home" class="scr menu">
+  <h1>🃏 Durak &amp; Bura</h1>
+  <p class="sub">Play with friends on your phones</p>
+  <button onclick="show('friends');loadFriends()"><span class="ico">👥</span>Friends</button>
+  <button onclick="show('invites');loadInvites()"><span class="ico">📨</span>Invites</button>
+  <button onclick="show('create')"><span class="ico">➕</span>Create lobby</button>
   <div id="notifs"></div>
   <div class="toast" id="toastHome"></div>
 </div>
 
 <div id="s-friends" class="scr hidden">
   <h2>👥 Friends</h2>
-  <div class="row"><input id="fName" placeholder="Username (e.g. ali_t)"><button class="alt" style="flex:0 0 auto;width:auto;margin:6px 0" onclick="addFriend()">Add</button></div>
+  <div class="row"><input id="fName" placeholder="Username (e.g. ali_t)"><button class="alt" onclick="addFriend()">Add</button></div>
   <div class="toast" id="toastFriends"></div>
   <div id="friendList"></div>
   <button class="alt" onclick="show('home')">⬅ Menu</button>
@@ -52,11 +166,15 @@ label.opt{display:flex;align-items:center;gap:8px;justify-content:center;backgro
 <div id="s-create" class="scr hidden">
   <h2>➕ Create lobby</h2>
   <div class="muted">Game</div>
-  <label class="opt"><input type="radio" name="game" value="durak" checked> Durak</label>
-  <label class="opt"><input type="radio" name="game" value="bura"> Bura</label>
+  <div class="opts">
+    <label class="opt"><input type="radio" name="game" value="durak" checked>Durak</label>
+    <label class="opt"><input type="radio" name="game" value="bura">Bura</label>
+  </div>
   <div class="muted">Deck size</div>
-  <label class="opt"><input type="radio" name="cards" value="24"> 24 cards</label>
-  <label class="opt"><input type="radio" name="cards" value="36" checked> 36 cards</label>
+  <div class="opts">
+    <label class="opt"><input type="radio" name="cards" value="24">24 cards</label>
+    <label class="opt"><input type="radio" name="cards" value="36" checked>36 cards</label>
+  </div>
   <div class="muted">Players</div>
   <select id="players"><option value="2">2 players</option><option value="3" selected>3 players</option><option value="4">4 players</option><option value="5">5 players</option><option value="6">6 players</option></select>
   <div class="toast" id="toastCreate"></div>
@@ -66,13 +184,16 @@ label.opt{display:flex;align-items:center;gap:8px;justify-content:center;backgro
 
 <div id="s-room" class="scr hidden">
   <h2 id="roomTitle">Lobby</h2>
-  <div class="muted">Lobby code</div>
-  <div class="code" id="roomCode"></div>
-  <div class="muted" id="roomInfo"></div>
-  <div class="card" id="memberList"></div>
-  <button id="btnReady" onclick="toggleReady()">✅ I'm ready</button>
-  <div id="hostBox" class="hidden">
-    <div class="row"><input id="invName" placeholder="Friend's username"><button class="alt" style="flex:0 0 auto;width:auto;margin:6px 0" onclick="invite()">Invite</button></div>
+  <div class="codebox">
+    <div class="muted">Lobby code</div>
+    <div class="code" id="roomCode"></div>
+  </div>
+  <div class="info" id="roomInfo"></div>
+  <div class="members" id="memberList"></div>
+  <button id="btnReady" data-ready="1" onclick="toggleReady()">✅ I'm ready</button>
+  <div id="hostBox" class="hidden invbox">
+    <div class="muted">Invite a friend</div>
+    <div class="row"><input id="invName" placeholder="Friend's username"><button class="alt" onclick="invite()">Invite</button></div>
     <button id="btnStart" onclick="startGame()" disabled>▶ Start game</button>
   </div>
   <div class="toast" id="toastRoom"></div>
@@ -92,6 +213,7 @@ function show(name) {
 }
 function say(id, text) { document.getElementById(id).textContent = text || ""; }
 const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const initial = s => esc(String(s || "?").trim().charAt(0).toUpperCase());
 async function api(path, body) {
   if (!initData) return { ok: false, error: "Open this page from Telegram (via the bot), not from a browser." };
   let r;
@@ -110,8 +232,12 @@ async function loadFriends() {
   const r = await safe(() => api("/api/friends"));
   const list = document.getElementById("friendList");
   if (!r.ok) return say("toastFriends", r.error);
-  list.innerHTML = r.friends.length ? "" : "<div class='muted'>No friends yet. Add one by username.</div>";
-  r.friends.forEach(f => { const d = document.createElement("div"); d.className = "card"; d.innerHTML = "<b>" + esc(f.name) + "</b> <span class='muted'>@" + esc(f.username) + "</span>"; list.appendChild(d); });
+  list.innerHTML = r.friends.length ? "" : "<div class='empty'>No friends yet. Add one by username.</div>";
+  r.friends.forEach(f => {
+    const d = document.createElement("div"); d.className = "friend";
+    d.innerHTML = "<div class='avatar'>" + initial(f.name || f.username) + "</div><div class='meta'><div class='nm'>" + esc(f.name) + "</div><div class='un'>@" + esc(f.username) + "</div></div>";
+    list.appendChild(d);
+  });
 }
 async function addFriend() {
   const u = document.getElementById("fName").value.trim();
@@ -126,7 +252,7 @@ function renderInvites(list, box) {
   box.innerHTML = "";
   list.forEach(i => {
     const d = document.createElement("div"); d.className = "notif";
-    d.innerHTML = "<div class='txt'><b>@" + esc(i.host_username || i.host_name) + "</b> invited you to " + (i.game === "bura" ? "Bura" : "Durak") + "<br><span class='muted'>" + i.cards + " cards, " + i.players + " players</span></div>";
+    d.innerHTML = "<div class='txt'><b>@" + esc(i.host_username || i.host_name) + "</b> invited you to " + (i.game === "bura" ? "Bura" : "Durak") + "<br><span class='muted' style='margin:2px 0 0;text-transform:none;letter-spacing:0'>" + i.cards + " cards · " + i.players + " players</span></div>";
     const btns = document.createElement("div"); btns.className = "btns";
     const acc = document.createElement("button"); acc.className = "acc"; acc.textContent = "Accept"; acc.onclick = () => joinRoom(i.id);
     const dec = document.createElement("button"); dec.className = "dec"; dec.textContent = "Refuse"; dec.onclick = () => declineInvite(i.id);
@@ -137,7 +263,7 @@ async function loadInvites() {
   const r = await safe(() => api("/api/invites"));
   const list = document.getElementById("inviteList");
   if (!r.ok) { list.textContent = r.error; return; }
-  if (!r.invites.length) { list.innerHTML = "<div class='muted'>No invites right now.</div>"; return; }
+  if (!r.invites.length) { list.innerHTML = "<div class='empty'>No invites right now.</div>"; return; }
   renderInvites(r.invites, list);
 }
 async function pollHomeInvites() {
@@ -185,14 +311,14 @@ async function loadRoom() {
   const g = r.room;
   document.getElementById("roomTitle").textContent = g.game === "bura" ? "Bura" : "Durak";
   document.getElementById("roomCode").textContent = g.id;
-  document.getElementById("roomInfo").textContent = g.cards + " cards, " + g.perHand + " each, " + g.players + " players";
-  const mine = r.members.find(m => m.id === r.room.host) ;
+  document.getElementById("roomInfo").textContent = g.cards + " cards · " + g.perHand + " each · " + g.players + " players";
   const box = document.getElementById("memberList");
-  box.innerHTML = "<b>Members (" + r.members.length + "/" + g.players + ")</b><br>" + r.members.map(m =>
-    (m.ready ? "✅ " : "⏳ ") + esc(m.name) + (m.id === g.host ? " 👑" : "")).join("<br>");
+  box.innerHTML = "<div class='mhead'><span>Members</span><span>" + r.members.length + "/" + g.players + "</span></div>" + r.members.map(m =>
+    "<div class='member'><div class='avatar' style='width:32px;height:32px;font-size:14px'>" + initial(m.name) + "</div><span class='nm'>" + esc(m.name) + (m.id === g.host ? " <span class='crown'>👑</span>" : "") + "</span><span class='badge " + (m.ready ? "ready'>Ready" : "wait'>Waiting") + "</span></div>").join("");
   const me = r.members.find(m => m.id === myId());
-  document.getElementById("btnReady").textContent = me && me.ready ? "⏳ Not ready" : "✅ I'm ready";
-  document.getElementById("btnReady").dataset.ready = me && me.ready ? "0" : "1";
+  const btnReady = document.getElementById("btnReady");
+  btnReady.textContent = me && me.ready ? "⏳ Not ready" : "✅ I'm ready";
+  btnReady.dataset.ready = me && me.ready ? "0" : "1";
   document.getElementById("hostBox").classList.toggle("hidden", !r.isHost);
   document.getElementById("btnLeave").classList.toggle("hidden", !!r.isHost);
   const allReady = r.members.length >= 2 && r.members.every(m => m.ready);
@@ -209,7 +335,7 @@ async function invite() {
   const u = document.getElementById("invName").value.trim();
   if (!u) return say("toastRoom", "Enter a username");
   const r = await safe(() => api("/api/invite", { id: roomId, username: u }));
-  say("toastRoom", r.ok ? r.name + " ga invited ✅" : r.error);
+  say("toastRoom", r.ok ? r.name + " invited ✅" : r.error);
   if (r.ok) document.getElementById("invName").value = "";
 }
 async function startGame() {
@@ -222,4 +348,6 @@ async function leaveRoom() {
   roomId = null; show("home");
 }
 if (initData) { pollHomeInvites(); setInterval(pollHomeInvites, 4000); }
-</script></body></html>
+</script>
+</body>
+</html>
